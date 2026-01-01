@@ -63,7 +63,7 @@ def _load_game_state(path: Path) -> dict[str, Any]:
         raise ValueError('game_state must be a JSON object')
     return raw
 
-
+# Create visualisation looping throug entities
 def render_game_state(state: dict[str, Any]) -> str:
     entities = state.get('entities', [])
     if not isinstance(entities, list):
@@ -133,13 +133,16 @@ def render_game_state(state: dict[str, Any]) -> str:
 
 
 def main(argv: list[str]) -> int:
-    cfg = load_config()
+    if len(argv) != 2:
+        prog = Path(argv[0]).name if argv else 'map_view.py'
+        print(f'usage: {prog} <path-to-game-state.json>', file=sys.stderr)
+        print('error: expected a path argument', file=sys.stderr)
+        return 2
 
-    if len(argv) > 1:
-        path = Path(argv[1])
-    else:
-        uuid = '00000000-0000-0000-0000-000000000000'
-        path = Path(cfg.store_path) / f'{uuid}.json'
+    path = Path(argv[1])
+    if not path.exists():
+        print(f'error: file not found: {path}', file=sys.stderr)
+        return 2
 
     state = _load_game_state(path)
     out = render_game_state(state)
