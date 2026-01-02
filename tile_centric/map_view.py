@@ -1,41 +1,10 @@
 from __future__ import annotations
 
-import json
 import sys
 from pathlib import Path
 from typing import Any
 
-from tile_centric.config import load_config
-
-
-def _parse_pos(pos: Any) -> tuple[int, int]:
-    if not isinstance(pos, str):
-        raise ValueError('pos must be a string like "x,y"')
-
-    parts = pos.split(',')
-    if len(parts) != 2:
-        raise ValueError('pos must be "x,y"')
-
-    try:
-        x = int(parts[0].strip())
-        y = int(parts[1].strip())
-    except ValueError as e:
-        raise ValueError('pos must contain two ints') from e
-
-    return x, y
-
-
-def _normalize_dir(dir_val: Any) -> int:
-    if isinstance(dir_val, str):
-        try:
-            dir_val = int(dir_val)
-        except ValueError:
-            dir_val = 0
-
-    if not isinstance(dir_val, int):
-        dir_val = 0
-
-    return dir_val % 8
+from tile_centric.game_state import GameState, _normalize_dir, _parse_pos
 
 
 def _parse_int(val: Any, default: int) -> int:
@@ -57,29 +26,15 @@ def _gray(text: str, enabled: bool) -> str:
     return f'\x1b[90m{text}\x1b[0m'
 
 
-def _load_game_state(path: Path) -> dict[str, Any]:
-    raw = json.loads(path.read_text(encoding='utf-8'))
-    if not isinstance(raw, dict):
-        raise ValueError('game_state must be a JSON object')
-    return raw
-
 # Create visualisation looping throug entities
-def render_game_state(state: dict[str, Any]) -> str:
-    entities = state.get('entities', [])
-    if not isinstance(entities, list):
-        raise ValueError('entities must be a list')
-
+def render_game_state(state: GameState) -> str:
     tiles: dict[tuple[int, int], int] = {}
     chars: dict[tuple[int, int], int] = {}
 
     color_enabled = sys.stdout.isatty()
 
-    for ent in entities:
-        if not isinstance(ent, dict):
-            continue
-        comps = ent.get('components')
-        if not isinstance(comps, dict):
-            continue
+    for ent in state.entities:
+        comps = ent.components
 
         ent_type = comps.get('type')
         pos = comps.get('pos')
@@ -144,7 +99,7 @@ def main(argv: list[str]) -> int:
         print(f'error: file not found: {path}', file=sys.stderr)
         return 2
 
-    state = _load_game_state(path)
+    state = GameState.read_json(path)
     out = render_game_state(state)
     if out:
         print(out)

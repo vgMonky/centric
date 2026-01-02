@@ -4,18 +4,6 @@ from dataclasses import dataclass, field
 from typing import Any, ClassVar, Mapping
 
 
-class Component:
-    kind: ClassVar[str] = 'component'
-
-    def to_dict(self) -> dict[str, Any]:
-        return dict(self.__dict__)
-
-    @classmethod
-    def from_dict(cls, data: Mapping[str, Any]) -> 'Component':
-        return cls(**dict(data))
-
-
-
 @dataclass(slots=True)
 class Entity:
     id: int
@@ -43,13 +31,16 @@ class Entity:
     def get_component(self, kind: str) -> Any | None:
         return self.components.get(kind)
 
+    def clone(self) -> 'Entity':
+        return Entity(id=self.id, components=dict(self.components))
+
     def to_dict(self) -> dict[str, Any]:
         return {'id': self.id, 'components': dict(self.components)}
 
     @classmethod
     def from_dict(cls, data: Mapping[str, Any]) -> 'Entity':
         entity_id = data.get('id')
-        if not isinstance(entity_id, int):
+        if not isinstance(entity_id, int) or isinstance(entity_id, bool):
             raise ValueError('Entity.id must be int')
 
         comps = data.get('components', {})
