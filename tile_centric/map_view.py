@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 import sys
-from pathlib import Path
 from typing import Any
 
-from tile_centric.game_state import GameState, _normalize_dir, _parse_pos
+from tile_centric.game_state import GameState
+from tile_centric.systems import _normalize_dir, _parse_pos
 
 
 def _parse_int(val: Any, default: int) -> int:
@@ -26,7 +26,6 @@ def _gray(text: str, enabled: bool) -> str:
     return f'\x1b[90m{text}\x1b[0m'
 
 
-# Create visualisation looping throug entities
 def render_game_state(state: GameState) -> str:
     tiles: dict[tuple[int, int], int] = {}
     chars: dict[tuple[int, int], int] = {}
@@ -85,27 +84,3 @@ def render_game_state(state: GameState) -> str:
         lines.append(''.join(row))
 
     return '\n'.join(lines)
-
-
-def main(argv: list[str]) -> int:
-    if len(argv) != 2:
-        prog = Path(argv[0]).name if argv else 'map_view.py'
-        print(f'usage: {prog} <path-to-game-state.json>', file=sys.stderr)
-        print('error: expected a path argument', file=sys.stderr)
-        return 2
-
-    path = Path(argv[1])
-    if not path.exists():
-        print(f'error: file not found: {path}', file=sys.stderr)
-        return 2
-
-    state = GameState.read_json(path)
-    out = render_game_state(state)
-    if out:
-        print(out)
-
-    return 0
-
-
-if __name__ == '__main__':
-    raise SystemExit(main(sys.argv))

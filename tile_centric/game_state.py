@@ -8,6 +8,7 @@ import time
 from typing import Any, Mapping
 
 from tile_centric.ecs import Entity
+from tile_centric.systems import _format_pos, move_system
 
 
 def _now_ts() -> int:
@@ -32,48 +33,6 @@ def _parse_state_index(state_id: Any) -> int:
         raise ValueError('info.id index must be >= 0')
 
     return idx
-
-
-def _parse_pos(pos: Any) -> tuple[int, int]:
-    if not isinstance(pos, list) or len(pos) != 2:
-        raise ValueError('pos must be [x, y]')
-
-    x, y = pos
-    if isinstance(x, bool) or isinstance(y, bool):
-        raise ValueError('pos must contain two ints')
-    if not isinstance(x, int) or not isinstance(y, int):
-        raise ValueError('pos must contain two ints')
-
-    return x, y
-
-
-def _format_pos(x: int, y: int) -> list[int]:
-    return [x, y]
-
-
-def _normalize_dir(dir_val: Any) -> int:
-    if isinstance(dir_val, str):
-        try:
-            dir_val = int(dir_val)
-        except ValueError:
-            dir_val = 0
-
-    if not isinstance(dir_val, int) or isinstance(dir_val, bool):
-        dir_val = 0
-
-    return dir_val % 8
-
-
-_DIR_DELTAS: dict[int, tuple[int, int]] = {
-    0: (0, -1),
-    1: (1, -1),
-    2: (1, 0),
-    3: (1, 1),
-    4: (0, 1),
-    5: (-1, 1),
-    6: (-1, 0),
-    7: (-1, -1),
-}
 
 
 @dataclass(slots=True)
@@ -156,6 +115,7 @@ class GameState:
         char.add_component('type', 'char')
         char.add_component('pos', _format_pos(0, 0))
         char.add_component('dir', 2)
+        char.add_component('walk', True)
         entities.append(char)
 
         return cls(
@@ -163,17 +123,10 @@ class GameState:
             entities=entities,
         )
 
-    def step(self, walk: bool) -> 'GameState':
+    def step(self) -> 'GameState':
         entities = [e.clone() for e in self.entities]
 
-        if walk:
-            chars = [e for e in entities if e.get_component('type') == 'char']
-            if chars:
-                char = chars[0]
-                x, y = _parse_pos(char.get_component('pos'))
-                dir_val = _normalize_dir(char.get_component('dir'))
-                dx, dy = _DIR_DELTAS[dir_val]
-                char.add_component('pos', _format_pos(x + dx, y + dy))
+        move_system(entities)
 
         next_index = _parse_state_index(self.info.id) + 1
         info = GameStateInfo(id=_make_state_id(next_index), parent_id=self.info.id)

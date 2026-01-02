@@ -5,12 +5,14 @@ from pathlib import Path
 
 from tile_centric.config import load_config
 from tile_centric.game_state import GameState
+from tile_centric.map_view import render_game_state
 
 
 def _usage(prog: str) -> int:
     print('usage:', file=sys.stderr)
     print(f'  {prog} gen [size]', file=sys.stderr)
     print(f'  {prog} step [path-to-game-state.json]', file=sys.stderr)
+    print(f'  {prog} view [path-to-game-state.json]', file=sys.stderr)
     return 2
 
 
@@ -47,7 +49,15 @@ def _find_latest_state_path(store_dir: Path) -> Path | None:
 
     return best_path
 
-# commands
+
+def _resolve_input_path(argv: list[str], store_dir: Path) -> Path | None:
+    if len(argv) == 1:
+        return Path(argv[0])
+    if len(argv) == 0:
+        return _find_latest_state_path(store_dir)
+    return None
+
+
 def _cmd_gen(argv: list[str]) -> int:
     size = 3
     if len(argv) == 1:
@@ -73,37 +83,52 @@ def _cmd_gen(argv: list[str]) -> int:
 
 
 def _cmd_step(argv: list[str]) -> int:
-    if len(argv) > 1:
-        print('error: step expects at most one input path', file=sys.stderr)
-        return 2
-
     cfg = load_config()
     out_dir = Path(cfg.store_path)
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    if len(argv) == 1:
-        in_path = Path(argv[0])
-    else:
-        in_path = _find_latest_state_path(out_dir)
-        if in_path is None:
-            print(
-                f'error: no game states found in: {out_dir}',
-                file=sys.stderr,
-            )
-            return 2
+    in_path = _resolve_input_path(argv, out_dir)
+    if in_path is None:
+        print('error: step expects at most one input path', file=sys.stderr)
+        return 2
 
     if not in_path.exists():
-        print(f'error: file not found: {in_path}', file=sys.stderr)
+        if len(argv) == 0:
+            print(f'error: no game states found in: {out_dir}', file=sys.stderr)
+        else:
+            print(f'error: file not found: {in_path}', file=sys.stderr)
         return 2
 
     state = GameState.read_json(in_path)
-
-    walk = True
-    next_state = state.step(walk=walk)
+    next_state = state.step()
 
     out_path = out_dir / f'{next_state.info.id}.json'
     next_state.write_json(out_path)
     print(out_path)
+    return 0
+
+
+def _cmd_view(argv: list[str]) -> int:
+    cfg = load_config()
+    out_dir = Path(cfg.store_path)
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    in_path = _resolve_input_path(argv, out_dir)
+    if in_path is None:
+        print('error: view expects at most one input path', file=sys.stderr)
+        return 2
+
+    if not in_path.exists():
+        if len(argv) == 0:
+            print(f'error: no game states found in: {out_dir}', file=sys.stderr)
+        else:
+            print(f'error: file not found: {in_path}', file=sys.stderr)
+        return 2
+
+    state = GameState.read_json(in_path)
+    out = render_game_state(state)
+    if out:
+        print(out)
     return 0
 
 
@@ -120,6 +145,9 @@ def main(argv: list[str]) -> int:
 
     if cmd == 'step':
         return _cmd_step(args)
+
+    if cmd == 'view':
+        return _cmd_view(args)
 
     print(f'error: unknown command: {cmd}', file=sys.stderr)
     return _usage(prog)
