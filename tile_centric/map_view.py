@@ -72,14 +72,19 @@ def render_game_state(state: GameState) -> str:
                     6: '←',
                     7: '↖',
                 }[dir_val]
-                cell = f'[ {glyph} ]'
+                if tiles.get((x, y)) == 0:
+                    left = _gray('[', color_enabled)
+                    right = _gray(']', color_enabled)
+                    cell = f'{left}{glyph}{right}'
+                else:
+                    cell = f'[{glyph}]'
             elif (x, y) in tiles:
                 if tiles[(x, y)] == 0:
-                    cell = _gray('[   ]', color_enabled)
+                    cell = _gray('[ ]', color_enabled)
                 else:
-                    cell = '[   ]'
+                    cell = '[ ]'
             else:
-                cell = '     '
+                cell = '   '
             row.append(cell)
         lines.append(''.join(row))
 

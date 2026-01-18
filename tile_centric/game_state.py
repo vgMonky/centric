@@ -111,10 +111,18 @@ class GameState:
                 e.add_component('material', random.getrandbits(1))
                 entities.append(e)
 
+        userChar = Entity.create_entity()
+        userChar.add_component('user', True)
+        userChar.add_component('type', 'char')
+        userChar.add_component('pos', _format_pos(0, 0))
+        userChar.add_component('dir', 2)
+        userChar.add_component('walk', True)
+        entities.append(userChar)
+
         char = Entity.create_entity()
         char.add_component('type', 'char')
-        char.add_component('pos', _format_pos(0, 0))
-        char.add_component('dir', 2)
+        char.add_component('pos', _format_pos(1, 1))
+        char.add_component('dir', 7)
         char.add_component('walk', True)
         entities.append(char)
 

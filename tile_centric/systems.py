@@ -48,13 +48,12 @@ _DIR_DELTAS: dict[int, tuple[int, int]] = {
 
 
 def move_system(entities: list[Entity]) -> None:
+    # For each entity that has walk component = true
     for ent in entities:
         comps = ent.components
-        if comps.get('type') != 'char':
-            continue
         if comps.get('walk') is not True:
             continue
-
+        # update their pos based on their dir
         x, y = _parse_pos(comps.get('pos'))
         dir_val = _normalize_dir(comps.get('dir'))
         dx, dy = _DIR_DELTAS[dir_val]
