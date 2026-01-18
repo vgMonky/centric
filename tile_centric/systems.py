@@ -53,8 +53,13 @@ def move_system(entities: list[Entity]) -> None:
         comps = ent.components
         if comps.get('walk') is not True:
             continue
-        # update their pos based on their dir
+
+        # 1. Update entities with pos based on their dir
         x, y = _parse_pos(comps.get('pos'))
         dir_val = _normalize_dir(comps.get('dir'))
         dx, dy = _DIR_DELTAS[dir_val]
         ent.add_component('pos', _format_pos(x + dx, y + dy))
+
+        # 2. Shift the matrix based on the `user` `dir` and `walk` state
+
+        # 3. Generate and remove tiles based on `user` `reality_radius`

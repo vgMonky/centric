@@ -97,6 +97,12 @@ class GameState:
 
     @classmethod
     def initial(cls, size: int = 3) -> 'GameState':
+        '''
+        Generating the first `GameState`
+        
+        Returns:
+            GameState: a brand new game_state
+        '''
         if size <= 0 or size % 2 == 0:
             raise ValueError('size must be a positive odd integer')
 
@@ -132,6 +138,11 @@ class GameState:
         )
 
     def step(self) -> 'GameState':
+        '''Advancing the `GameState` by one step.
+        
+        Returns:
+            GameState: A new game_state transformed based on different `systems`
+        '''
         entities = [e.clone() for e in self.entities]
 
         move_system(entities)

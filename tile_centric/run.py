@@ -70,7 +70,7 @@ def _cmd_gen(argv: list[str]) -> int:
         print('error: too many args for gen', file=sys.stderr)
         return 2
 
-    state = GameState.initial(size=size)
+    state: GameState = GameState.initial(size=size)
 
     cfg = load_config()
     out_dir = Path(cfg.store_path)
@@ -114,9 +114,6 @@ def _cmd_view(argv: list[str]) -> int:
     out_dir.mkdir(parents=True, exist_ok=True)
 
     in_path = _resolve_input_path(argv, out_dir)
-    if in_path is None:
-        print('error: view expects at most one input path', file=sys.stderr)
-        return 2
 
     if not in_path.exists():
         if len(argv) == 0:
